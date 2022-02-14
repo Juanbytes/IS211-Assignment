@@ -3,9 +3,9 @@ import argparse
 import datetime
 import logging
 
-
 logging.basicConfig(filename="errors.log", level=logging.ERROR)
 assignment2 = logging.getLogger()
+
 
 def downloadData(url):
     with urllib.request.urlopen(url) as response:
@@ -21,10 +21,9 @@ def processData(file_content):
         if len(data_info) == 0:
             continue
 
-    id, name, birthday = data_info.split(",")
-    if id == "id":
-
-         id_int = int(id)
+    identifier, name, birthday = data_info.split(",")
+    if identifier == "id":
+        id_int = int(identifier)
     try:
         true_birthday = datetime.datetime.strptime(birthday, "%d/%m/%Y")
         person_data[id_int] = (name, true_birthday)
@@ -33,6 +32,7 @@ def processData(file_content):
 
     return person_data
 
+
 def displayPerson(id, personData):
     try:
         name, birthday = personData[id]
@@ -40,16 +40,18 @@ def displayPerson(id, personData):
     except KeyError:
         print(f"No user found with that id")
 
+
 def main(url):
     print(f"Running main with URL = {url}...")
-    file_content = downloadData(url)
-    print(file_content)
-    personData = processData(file_content)
+    content = downloadData(url)
+    print(content)
     while True:
         id = int(input("Enter an ID:"))
-    if id > 0:
-        displayPerson(id, personData)
-    print(personData)
+        if id > 0:
+            print(id)
+        else:
+            print("No user found with that id")
+            break
 
 
 if __name__ == "__main__":
