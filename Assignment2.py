@@ -49,6 +49,7 @@ def main(url):
         id = int(input("Enter an ID:"))
         if id > 0:
             print(id)
+            break
         else:
             print("No user found with that id")
             break
@@ -59,3 +60,8 @@ if __name__ == "__main__":
     parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
     args = parser.parse_args()
     main(args.url)
+
+
+
+
+
