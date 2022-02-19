@@ -1,61 +1,60 @@
-import argparse
 import urllib.request
 import csv
 import re
+import time
+import argparse
 
 
-def downloadData(url):
-    with urllib.request.urlopen(url) as response:
-        datafile = response.read().decode('utf-8')
-    return datafile
+def download_data():
+    required_args = ['url']
+    parser = argparse.ArgumentParser()
+    for r in required_args:
+        parser.add_argument("--{0}".format(r), required=True)
+    args = parser.parse_args()
+    urllib.request.urlretrieve(args.url, 'weblog.csv')
 
 
-def processData(datafile):
-    readfile = csv.reader(datafile)
-    line_count = 0
-    imagecount = 0
+def process_data():
+    with open('weblog.csv', 'r') as f:
+        csv_reader = csv.reader(f)
+        count_images = 0
+        safari = 0
+        firefox = 0
+        chrome = 0
+        ie = 0
+        n_list = []
+        for line in csv_reader:
+            if re.findall("jpg|png|gif", line[0], flags=re.I):
+                count_images += 1
+                s = line[1]
+                k = time.strptime(s, "%Y-%m-%d %H:%M:%S").tm_hour
+                n_list.append(k)
+                if re.search("safari/", line[2], flags=re.I):
+                    if not re.search("chrome", line[2], flags=re.I):
+                        safari += 1
+                if re.search("firefox/", line[2], flags=re.I):
+                    if not re.search("seamonkey/", line[2], flags=re.I):
+                        firefox += 1
+                if re.search("chrome/", line[2], flags=re.I):
+                    if not re.search("chromium", line[2], flags=re.I):
+                        chrome += 1
+                if re.search("msie", line[2], flags=re.I):
+                    ie += 1
+    browsers = {'Safari': safari,'Firefox': firefox,'Chrome': chrome,'IE': ie}
 
-    chrome = ['Google Chrome', 0]
-    msie = ['Internet Explorer', 0]
-    safari = ['Safari', 0]
-    firefox = ['Firefox', 0]
-    for line in readfile:
-        line_count += 1
-        if re.search("firefox", line[2], re.I):
-            firefox[1] += 1
-        elif re.search(r"MSIE", line[2]):
-            msie[1] += 1
-        elif re.search(r"Chrome", line[2]):
-            chrome[1] += 1
-        elif re.search(r"Safari", line[2]) and not re.search("Chrome", line[2]):
-            safari[1] += 1
-        if re.search(r"jpe?g|JPE?G|png|PNG|gif|GIF", line[0]):
-            imagecount += 1
+    row_count = sum(1 for row in csv.reader(open('weblog.csv')))
+    math = 100 * count_images / row_count
+    print("Image requests account for {} of all requests".format(math))
 
-    image_hit = (float(imagecount) / line_count) * 100
-    pop_browser = [chrome, msie, safari, firefox]
-    top_browser = 0
-    top_name = ' '
-    for b in pop_browser:
-        if b[1] > top_browser:
-            top_browser = b[1]
-            top_name = b[0]
-        else:
-            continue
+    pop_browser = max(browsers, key=browsers.get)
+    print("The most popular browser was {}".format(pop_browser))
 
-    msg = ('There were {} page hits today, image requests account for {}% of'
-           'hits. \n{} has the most hits with {}.').format(line_count, image_hit,
-                                                           top_name, top_browser)
-    print(msg)
+    count_hits_list = [[x, n_list.count(x)] for x in set(n_list)]
+    for n in count_hits_list:
+        print("Hour {} has {} hits".format(n[0], n[1]))
+    f.close()
 
 
-def main(url):
-    print(f"Running main with URL = {url}...")
-    content = downloadData(url)
-    print(content)
-
-    if __name__ == "__main__":
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--url", help="URL to the datafile", type=str, required=True)
-        args = parser.parse_args()
-        main(args.url)
+if __name__ == "__main__":
+    download_data()
+    process_data()
